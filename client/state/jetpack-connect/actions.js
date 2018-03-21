@@ -197,32 +197,72 @@ export function retryAuth( url, attemptNumber ) {
 	};
 }
 
-export function createAccount( userData ) {
+export function createAccount( userData, { service, access_token, id_token } = {} ) {
 	return dispatch => {
 		dispatch( recordTracksEvent( 'calypso_jpc_create_account', {} ) );
 
 		dispatch( {
 			type: JETPACK_CONNECT_CREATE_ACCOUNT,
-			userData: userData,
+			userData,
 		} );
-		wpcom.undocumented().usersNew( userData, ( error, data ) => {
-			if ( error ) {
-				dispatch(
-					recordTracksEvent( 'calypso_jpc_create_account_error', {
-						error_code: error.code,
-						error: JSON.stringify( error ),
-					} )
-				);
-			} else {
-				dispatch( recordTracksEvent( 'calypso_jpc_create_account_success', {} ) );
-			}
-			dispatch( {
-				type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
-				userData: userData,
-				data: data,
-				error: error,
+
+		if ( service ) {
+			// We're creating a new social account
+			wpcom.undocumented().usersSocialNew(
+				{
+					service,
+					access_token,
+					id_token,
+
+					/**
+					 * @TODO (sirreal) update to `jetpack-connect` when D11099-code lands
+					 *
+					 * The signup flow is required and affects some post signup activity.
+					 * `account` should be safe until patch lands.
+					 */
+					signup_flow_name: 'account',
+					// signup_flow_name: 'jetpack-connect',
+				},
+				( error, response = {} ) => {
+					debug( 'Social error %o response %o', error, response );
+					if ( error ) {
+						dispatch(
+							recordTracksEvent( 'calypso_jpc_social_createaccount_error', {
+								error: JSON.stringify( error ),
+								error_code: error.code,
+							} )
+						);
+					} else {
+						dispatch( recordTracksEvent( 'calypso_jpc_social_createaccount_success' ) );
+					}
+					dispatch( {
+						type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
+						userData: { username: response.username },
+						data: { bearer_token: response.bearer_token },
+						error,
+					} );
+				}
+			);
+		} else {
+			wpcom.undocumented().usersNew( userData, ( error, data ) => {
+				if ( error ) {
+					dispatch(
+						recordTracksEvent( 'calypso_jpc_create_account_error', {
+							error: JSON.stringify( error ),
+							error_code: error.code,
+						} )
+					);
+				} else {
+					dispatch( recordTracksEvent( 'calypso_jpc_create_account_success' ) );
+				}
+				dispatch( {
+					type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
+					data,
+					error,
+					userData,
+				} );
 			} );
-		} );
+		}
 	};
 }
 
