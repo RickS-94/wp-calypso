@@ -15,6 +15,7 @@ import userFactory from 'lib/user';
 import wpcom from 'lib/wp';
 import { addQueryArgs, externalRedirect } from 'lib/route';
 import { clearPlan, persistSession } from 'jetpack-connect/persistence-utils';
+import { createSocialUser } from 'state/login/actions';
 import { receiveDeletedSite, receiveSite } from 'state/sites/actions';
 import { recordTracksEvent } from 'state/analytics/actions';
 import { REMOTE_PATH_AUTH } from 'jetpack-connect/constants';
@@ -196,7 +197,7 @@ export function retryAuth( url, attemptNumber ) {
 	};
 }
 
-export function createAccount( userData, { service, access_token, id_token } = {} ) {
+export function createAccount( userData, socialInfo ) {
 	return dispatch => {
 		dispatch( recordTracksEvent( 'calypso_jpc_create_account', {} ) );
 
@@ -205,42 +206,29 @@ export function createAccount( userData, { service, access_token, id_token } = {
 			userData,
 		} );
 
-		if ( service ) {
-			// We're creating a new social account
-			wpcom.undocumented().usersSocialNew(
-				{
-					service,
-					access_token,
-					id_token,
-
-					/**
-					 * @TODO (sirreal) update to `jetpack-connect` when D11099-code lands
-					 *
-					 * The signup flow is required and affects some post signup activity.
-					 * `account` should be safe until patch lands.
-					 */
-					signup_flow_name: 'account',
-					// signup_flow_name: 'jetpack-connect',
-				},
-				( error, response = {} ) => {
-					debug( 'Social account response: error [%o] response [%o]', error, response );
-					if ( error ) {
-						dispatch(
-							recordTracksEvent( 'calypso_jpc_social_createaccount_error', {
-								error: JSON.stringify( error ),
-								error_code: error.code,
-							} )
-						);
-					} else {
-						dispatch( recordTracksEvent( 'calypso_jpc_social_createaccount_success' ) );
-					}
+		if ( socialInfo ) {
+			/**
+			 * @TODO (sirreal) update to `jetpack-connect` when D11099-code lands
+			 *
+			 * The signup flow is required and affects some post signup activity.
+			 * `account` should be safe until patch lands.
+			 */
+			createSocialUser( socialInfo, 'account' /* 'jetpack-connect' */ ).then(
+				( { username, bearerToken } ) => {
+					dispatch( recordTracksEvent( 'calypso_jpc_social_createaccount_success' ) );
 					dispatch( {
 						type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
-						userData: { username: response.username },
-						data: { bearer_token: response.bearer_token },
-						error,
+						userData: { username },
+						data: { bearer_token: bearerToken },
 					} );
-				}
+				},
+				error =>
+					dispatch(
+						recordTracksEvent( 'calypso_jpc_social_createaccount_error', {
+							error: JSON.stringify( error ),
+							error_code: error.code,
+						} )
+					)
 			);
 		} else {
 			wpcom.undocumented().usersNew( userData, ( error, data ) => {
