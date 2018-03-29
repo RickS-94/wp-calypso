@@ -201,10 +201,7 @@ export function createAccount( userData, socialInfo ) {
 	return dispatch => {
 		dispatch( recordTracksEvent( 'calypso_jpc_create_account', {} ) );
 
-		dispatch( {
-			type: JETPACK_CONNECT_CREATE_ACCOUNT,
-			userData,
-		} );
+		dispatch( { type: JETPACK_CONNECT_CREATE_ACCOUNT } );
 
 		if ( socialInfo ) {
 			/**
