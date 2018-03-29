@@ -197,56 +197,62 @@ export function retryAuth( url, attemptNumber ) {
 	};
 }
 
-export function createAccount( userData, socialInfo ) {
+export function createSocialAccount( socialInfo ) {
+	return dispatch => {
+		dispatch( recordTracksEvent( 'calypso_jpc_social_create_account' ) );
+
+		dispatch( { type: JETPACK_CONNECT_CREATE_ACCOUNT } );
+
+		/**
+		 * @TODO (sirreal) update to `jetpack-connect` when D11099-code lands
+		 *
+		 * The signup flow is required and affects some post signup activity.
+		 * `account` should be safe until patch lands.
+		 */
+		createSocialUser( socialInfo, 'account' /* 'jetpack-connect' */ ).then(
+			( { username, bearerToken } ) => {
+				dispatch( recordTracksEvent( 'calypso_jpc_social_createaccount_success' ) );
+				dispatch( {
+					type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
+					userData: { username },
+					data: { bearer_token: bearerToken },
+				} );
+			},
+			error =>
+				dispatch(
+					recordTracksEvent( 'calypso_jpc_social_createaccount_error', {
+						error: JSON.stringify( error ),
+						error_code: error.code,
+					} )
+				)
+		);
+	};
+}
+
+export function createAccount( userData ) {
 	return dispatch => {
 		dispatch( recordTracksEvent( 'calypso_jpc_create_account', {} ) );
 
 		dispatch( { type: JETPACK_CONNECT_CREATE_ACCOUNT } );
 
-		if ( socialInfo ) {
-			/**
-			 * @TODO (sirreal) update to `jetpack-connect` when D11099-code lands
-			 *
-			 * The signup flow is required and affects some post signup activity.
-			 * `account` should be safe until patch lands.
-			 */
-			createSocialUser( socialInfo, 'account' /* 'jetpack-connect' */ ).then(
-				( { username, bearerToken } ) => {
-					dispatch( recordTracksEvent( 'calypso_jpc_social_createaccount_success' ) );
-					dispatch( {
-						type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
-						userData: { username },
-						data: { bearer_token: bearerToken },
-					} );
-				},
-				error =>
-					dispatch(
-						recordTracksEvent( 'calypso_jpc_social_createaccount_error', {
-							error: JSON.stringify( error ),
-							error_code: error.code,
-						} )
-					)
-			);
-		} else {
-			wpcom.undocumented().usersNew( userData, ( error, data ) => {
-				if ( error ) {
-					dispatch(
-						recordTracksEvent( 'calypso_jpc_create_account_error', {
-							error: JSON.stringify( error ),
-							error_code: error.code,
-						} )
-					);
-				} else {
-					dispatch( recordTracksEvent( 'calypso_jpc_create_account_success' ) );
-				}
-				dispatch( {
-					type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
-					data,
-					error,
-					userData,
-				} );
+		wpcom.undocumented().usersNew( userData, ( error, data ) => {
+			if ( error ) {
+				dispatch(
+					recordTracksEvent( 'calypso_jpc_create_account_error', {
+						error: JSON.stringify( error ),
+						error_code: error.code,
+					} )
+				);
+			} else {
+				dispatch( recordTracksEvent( 'calypso_jpc_create_account_success' ) );
+			}
+			dispatch( {
+				type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
+				data,
+				error,
+				userData,
 			} );
-		}
+		} );
 	};
 }
 

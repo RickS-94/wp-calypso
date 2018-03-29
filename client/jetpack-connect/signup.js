@@ -33,7 +33,10 @@ import SignupForm from 'components/signup-form';
 import WpcomLoginForm from 'signup/wpcom-login-form';
 import { addQueryArgs } from 'lib/route';
 import { authQueryPropTypes } from './utils';
-import { createAccount as createAccountAction } from 'state/jetpack-connect/actions';
+import {
+	createAccount as createAccountAction,
+	createSocialAccount as createSocialAccountAction,
+} from 'state/jetpack-connect/actions';
 import { getAuthorizationData } from 'state/jetpack-connect/selectors';
 import { isEnabled } from 'config';
 import { login } from 'lib/paths';
@@ -91,7 +94,7 @@ export class JetpackSignup extends Component {
 	 */
 	handleSocialResponse = ( service, access_token, id_token = null ) => {
 		debug( 'submiting new social account' );
-		this.props.createAccount( null, { service, access_token, id_token } );
+		this.props.createSocialAccount( { service, access_token, id_token } );
 	};
 
 	handleClickHelp = () => {
@@ -183,6 +186,7 @@ export default connect(
 	} ),
 	{
 		createAccount: createAccountAction,
+		createSocialAccount: createSocialAccountAction,
 		recordTracksEvent: recordTracksEventAction,
 	}
 )( localize( JetpackSignup ) );
