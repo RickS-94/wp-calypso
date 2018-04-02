@@ -209,7 +209,7 @@ export function createSocialAccount( socialInfo ) {
 		 * The signup flow is required and affects some post signup activity.
 		 * `account` should be safe until patch lands.
 		 */
-		return createSocialUser( socialInfo, 'account' /* 'jetpack-connect' */ ).then(
+		return createSocialUser( socialInfo, 'account' /* 'jetpack-connect' */ )( dispatch ).then(
 			( { username, bearerToken } ) => {
 				dispatch( recordTracksEvent( 'calypso_jpc_social_createaccount_success' ) );
 				dispatch( {
