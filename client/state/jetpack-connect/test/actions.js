@@ -13,6 +13,7 @@ import {
 	JETPACK_CONNECT_AUTHORIZE_RECEIVE,
 	JETPACK_CONNECT_AUTHORIZE_RECEIVE_SITE_LIST,
 	JETPACK_CONNECT_CONFIRM_JETPACK_STATUS,
+	JETPACK_CONNECT_CREATE_ACCOUNT,
 	JETPACK_CONNECT_DISMISS_URL_STATUS,
 	JETPACK_CONNECT_RETRY_AUTH,
 	JETPACK_CONNECT_SSO_AUTHORIZE_ERROR,
@@ -408,5 +409,15 @@ describe( '#authorizeSSO()', () => {
 				} );
 			} );
 		} );
+	} );
+} );
+
+describe( '#createSocialAccount()', () => {
+	const { createSocialAccount } = actions;
+
+	test( 'should dispatch create action', async () => {
+		const spy = jest.fn();
+		await createSocialAccount()( spy );
+		expect( spy ).toHaveBeenCalledWith( { type: JETPACK_CONNECT_CREATE_ACCOUNT } );
 	} );
 } );
