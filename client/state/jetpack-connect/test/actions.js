@@ -419,7 +419,7 @@ describe( '#createSocialAccount()', () => {
 			.spyOn( loginActions, 'createSocialUser' )
 			.mockImplementation( () => () =>
 				Promise.reject( { message: 'An error message', code: 'an_error_code' } )
-			 );
+			 ); // eslint-disable-line no-mixed-spaces-and-tabs
 		const spy = jest.fn();
 
 		await createSocialAccount()( spy );
