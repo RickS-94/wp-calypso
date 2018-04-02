@@ -7,6 +7,7 @@
  */
 import * as actions from '../actions';
 import useNock from 'test/helpers/use-nock';
+import * as loginActions from 'state/login/actions';
 import {
 	JETPACK_CONNECT_AUTHORIZE,
 	JETPACK_CONNECT_AUTHORIZE_LOGIN_COMPLETE,
@@ -14,6 +15,7 @@ import {
 	JETPACK_CONNECT_AUTHORIZE_RECEIVE_SITE_LIST,
 	JETPACK_CONNECT_CONFIRM_JETPACK_STATUS,
 	JETPACK_CONNECT_CREATE_ACCOUNT,
+	JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
 	JETPACK_CONNECT_DISMISS_URL_STATUS,
 	JETPACK_CONNECT_RETRY_AUTH,
 	JETPACK_CONNECT_SSO_AUTHORIZE_ERROR,
@@ -419,5 +421,37 @@ describe( '#createSocialAccount()', () => {
 		const spy = jest.fn();
 		await createSocialAccount()( spy );
 		expect( spy ).toHaveBeenCalledWith( { type: JETPACK_CONNECT_CREATE_ACCOUNT } );
+	} );
+
+	test( 'should not continue on error', async () => {
+		jest
+			.spyOn( loginActions, 'createSocialUser' )
+			.mockImplementation( () => () =>
+				Promise.reject( { message: 'An error message', code: 'an_error_code' } )
+			 );
+		const spy = jest.fn();
+
+		await createSocialAccount()( spy );
+		expect( spy ).not.toHaveBeenCalledWith( { type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE } );
+
+		loginActions.createSocialUser.mockRestore();
+	} );
+
+	test( 'should dispatch receive action with appropriate data', async () => {
+		const username = 'a_happy_user';
+		const bearerToken = 'foobar';
+		jest
+			.spyOn( loginActions, 'createSocialUser' )
+			.mockImplementation( () => async () => ( { username, bearerToken } ) );
+		const spy = jest.fn();
+
+		await createSocialAccount()( spy );
+		expect( spy ).toHaveBeenCalledWith( {
+			type: JETPACK_CONNECT_CREATE_ACCOUNT_RECEIVE,
+			userData: { username },
+			data: { bearer_token: bearerToken },
+		} );
+
+		loginActions.createSocialUser.mockRestore();
 	} );
 } );
