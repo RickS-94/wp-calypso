@@ -3,23 +3,24 @@
 /**
  * External dependencies
  */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { localize } from 'i18n-calypso';
 import { connect } from 'react-redux';
+import { localize } from 'i18n-calypso';
 import page from 'page';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 
 /**
  * Internal dependencies
  */
-import HeaderCake from 'components/header-cake';
-import Card from 'components/card';
 import ActionCard from 'components/action-card';
-import Main from 'components/main';
-import { recordTracksEvent } from 'state/analytics/actions';
+import Card from 'components/card';
+import DocumentHead from 'components/data/document-head';
 import ExternalLink from 'components/external-link';
-import PageViewTracker from 'lib/analytics/page-view-tracker';
 import { getSelectedSiteSlug } from 'state/ui/selectors';
+import HeaderCake from 'components/header-cake';
+import Main from 'components/main';
+import PageViewTracker from 'lib/analytics/page-view-tracker';
+import { recordTracksEvent } from 'state/analytics/actions';
 
 class GoogleMyBusinessSelectBusinessType extends Component {
 	static propTypes = {
@@ -59,6 +60,8 @@ class GoogleMyBusinessSelectBusinessType extends Component {
 					path="/google-my-business/:site/select-business-type"
 					title="Google My Business > Select Business Type"
 				/>
+
+				<DocumentHead title={ translate( 'Google My Business' ) } />
 
 				<HeaderCake isCompact={ false } alwaysShowActionText={ false } onClick={ this.goBack }>
 					{ translate( 'Google My Business' ) }
